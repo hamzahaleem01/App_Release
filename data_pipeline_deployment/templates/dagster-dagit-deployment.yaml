@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-deployment-dagster-dagit
+  labels:
+    app: {{ .Chart.Name }}-dagster-dagit
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-dagster-dagit
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-dagster-dagit
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-dagster-dagit
+          image: {{ .Values.docker.backend.image.name }}:{{ .Values.docker.backend.image.tag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.docker.backend.port }}
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-host-secret
+                  key: <dbHostObjectName>
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-user-secret
+                  key: <dbUserObjectName>
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-password-secret
+                  key: <dbPasswordObjectName>
+          envFrom:
+            - configMapRef:
+                name: dagster-config
+          volumeMounts:
+            - name: {{ printf "%s-%s" .Chart.Name "secret-provider-class" | quote }}
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+      imagePullSecrets:
+        - name: azure-pull-secret
+      restartPolicy: Always
+      volumes:
+        - name: {{ printf "%s-%s" .Chart.Name "secret-provider-class" | quote }}
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Chart.Name }}-secret-provider-class

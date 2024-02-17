@@ -1,0 +1,27 @@
+gitlab:
+  group:
+    name: <groupName>
+    project:
+      name: <projectName>
+
+
+replicaCount: 1
+revisionHistoryLimit: 3
+
+annotations:
+  randomHashAerena: random
+
+docker:
+  backend:
+    image:
+      name: <imageName>
+      tag: <imageTag>
+    port: 3000
+    targetPort: 3000
+
+app:
+  host: data-pipeline.com
+  keyvaultName: <keyVaultName>
+  secretCSIDriver:
+    clientID: <clientID>
+  tenantID: <tenantID>
